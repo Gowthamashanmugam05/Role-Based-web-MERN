@@ -34,7 +34,7 @@ const Dashboard = () => {
         // ping every 60 seconds (1 minute)
         const timeInterval = setInterval(async () => {
             try {
-                await axios.post('http://localhost:5000/api/auth/time', 
+                await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/time`, 
                     { seconds: 60 },
                     { headers: { Authorization: `Bearer ${user.token}` } }
                 );
@@ -59,7 +59,7 @@ const Dashboard = () => {
     const fetchLiveJobs = async (role, loc) => {
         setJobsLoading(true);
         try {
-            const response = await axios.get('http://localhost:5000/api/jobs', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jobs`, {
                 params: { query: role || 'IT jobs', location: loc || 'India', pages: 1 },
                 timeout: 15000,
             });
@@ -93,7 +93,7 @@ const Dashboard = () => {
         formData.append('location', location);
 
         try {
-            const response = await axios.post('http://localhost:5000/api/resume/analyze', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/resume/analyze`, formData, {
                 timeout: 120000
             });
             if (response.data.success) {
