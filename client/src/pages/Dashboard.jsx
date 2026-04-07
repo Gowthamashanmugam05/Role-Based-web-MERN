@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 import { 
     Upload, FileText, Send, CheckCircle2, XCircle, 
     Zap, Target, Sparkles, BookOpen, UserCheck, 
@@ -34,7 +35,7 @@ const Dashboard = () => {
         // ping every 60 seconds (1 minute)
         const timeInterval = setInterval(async () => {
             try {
-                await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/time`, 
+                await axios.post(`${API_URL}/api/auth/time`, 
                     { seconds: 60 },
                     { headers: { Authorization: `Bearer ${user.token}` } }
                 );
@@ -59,7 +60,7 @@ const Dashboard = () => {
     const fetchLiveJobs = async (role, loc) => {
         setJobsLoading(true);
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/jobs`, {
+            const response = await axios.get(`${API_URL}/api/jobs`, {
                 params: { query: role || 'IT jobs', location: loc || 'India', pages: 1 },
                 timeout: 15000,
             });
@@ -93,7 +94,7 @@ const Dashboard = () => {
         formData.append('location', location);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/resume/analyze`, formData, {
+            const response = await axios.post(`${API_URL}/api/resume/analyze`, formData, {
                 timeout: 120000
             });
             if (response.data.success) {

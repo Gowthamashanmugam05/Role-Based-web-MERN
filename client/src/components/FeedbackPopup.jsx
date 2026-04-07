@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 
@@ -65,7 +66,7 @@ const FeedbackPopup = () => {
 
         try {
             if (user?.token) {
-                await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/feedback`, 
+                await axios.post(`${API_URL}/api/feedback`, 
                     { rating, message }, 
                     { headers: { Authorization: `Bearer ${user.token}` } }
                 );

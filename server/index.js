@@ -11,6 +11,7 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
+    'https://role-based-web-mern.vercel.app',
     process.env.FRONTEND_URL,
     'http://localhost:5173',
     'http://localhost:3000'
