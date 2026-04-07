@@ -15,6 +15,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    otp: {
+        type: String,
+    },
+    otpExpires: {
+        type: Date,
+    },
     age: {
         type: Number,
     },
@@ -25,16 +35,6 @@ const userSchema = new mongoose.Schema({
     totalTimeSpent: {
         type: Number, // in seconds
         default: 0
-    },
-    isVerified: {
-        type: Boolean,
-        default: false
-    },
-    otp: {
-        type: String,
-    },
-    otpExpires: {
-        type: Date,
     }
 }, { timestamps: true });
 

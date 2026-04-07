@@ -2,18 +2,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 
-// Generate JWT token
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-    });
-};
-
-// Generate OTP
-const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
 // Register a new user
 const registerUser = async (req, res) => {
     try {
@@ -25,34 +13,43 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        const otp = generateOTP();
-        const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = Date.now() + 10 * 60 * 1000;
 
-        if (user) {
-            // Unverified user requesting again
-            user.name = name;
-            user.password = password; // this triggers the pre-save hook for hashing, wait is that true? Yes, if modified
-            user.otp = otp;
-            user.otpExpires = otpExpires;
-            await user.save();
-        } else {
+        if (!user) {
             user = await User.create({
                 name,
                 email,
                 password,
                 otp,
                 otpExpires,
-                isVerified: false
             });
+        } else {
+            user.name = name;
+            user.password = password;
+            user.otp = otp;
+            user.otpExpires = otpExpires;
+            await user.save();
         }
 
-        await sendEmail({
-            to: email,
-            subject: 'Verify your Role-Based Job Matcher account',
-            html: `<h1>Welcome to our platform!</h1><p>Your OTP for registration is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`
-        });
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Job Matcher - Verification OTP',
+                message: `Your OTP is ${otp}. It expires in 10 minutes.`,
+                html: `<h1>Job Matcher OTP</h1><p>Your verification OTP is <strong>${otp}</strong>.</p><p>It will expire in 10 minutes.</p>`
+            });
 
-        res.status(200).json({ message: 'OTP sent to email. Please verify.' });
+            res.status(200).json({
+                message: 'OTP sent to your email. Please verify to complete your request.',
+                email: user.email
+            });
+        } catch (error) {
+            user.otp = undefined;
+            user.otpExpires = undefined;
+            await user.save();
+            return res.status(500).json({ message: 'Error sending email' });
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -66,18 +63,35 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.comparePassword(password))) {
-            const otp = generateOTP();
+            if (!user.isVerified) {
+                return res.status(401).json({ message: 'Please verify your email first' });
+            }
+
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpExpires = Date.now() + 10 * 60 * 1000;
+            
             user.otp = otp;
-            user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+            user.otpExpires = otpExpires;
             await user.save();
 
-            await sendEmail({
-                to: email,
-                subject: 'Your Login OTP',
-                html: `<p>Your OTP for login is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`
-            });
+            try {
+                await sendEmail({
+                    email: user.email,
+                    subject: 'Job Matcher - Login OTP',
+                    message: `Your login OTP is ${otp}. It expires in 10 minutes.`,
+                    html: `<h1>Job Matcher Login OTP</h1><p>Your OTP for login is <strong>${otp}</strong>.</p><p>It will expire in 10 minutes.</p>`
+                });
 
-            res.status(200).json({ message: 'OTP sent to email. Please verify.', requireOTP: true });
+                res.json({
+                    message: 'OTP sent to your email. Please verify to complete login.',
+                    email: user.email
+                });
+            } catch (error) {
+                user.otp = undefined;
+                user.otpExpires = undefined;
+                await user.save();
+                return res.status(500).json({ message: 'Error sending email' });
+            }
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
         }
@@ -90,7 +104,6 @@ const loginUser = async (req, res) => {
 const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -112,10 +125,18 @@ const verifyOTP = async (req, res) => {
             name: user.name,
             email: user.email,
             token: generateToken(user._id),
+            message: 'Verification successful'
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+};
+
+// Generate JWT token
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d',
+    });
 };
 
 // Update Time Spent

@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
-    const verifyOtp = async (email, otp) => {
-        const { data } = await axios.post(`${API_URL}/api/auth/verify`, { email, otp });
+    const verifyOTP = async (email, otp) => {
+        const { data } = await axios.post(`${API_URL}/api/auth/verify-otp`, { email, otp });
         localStorage.setItem('user', JSON.stringify(data));
         setUser(data);
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, verifyOtp, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, register, verifyOTP, logout }}>
             {children}
         </AuthContext.Provider>
     );
