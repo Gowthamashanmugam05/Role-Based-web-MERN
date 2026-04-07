@@ -36,34 +36,62 @@ app.use('/api/feedback', feedbackRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
-    res.send('Job Matcher API is running...');
+    res.json({ 
+        status: 'online', 
+        message: 'Job Matcher API is running...',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-    console.error('❌ MONGODB_URI is not defined in .env');
-    process.exit(1);
-}
+console.log('--- Startup Configuration ---');
+console.log('PORT:', PORT);
+console.log('MONGODB_URI:', MONGODB_URI ? 'Defined (HIDDEN)' : 'NOT DEFINED');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Defined' : 'NOT DEFINED');
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'Defined' : 'NOT DEFINED');
+console.log('----------------------------');
 
-mongoose.connect(MONGODB_URI, {
-    serverApi: {
-        version: '1',
-        strict: true,
-        deprecationErrors: true,
-    },
-    serverSelectionTimeoutMS: 10000,  // Timeout after 10s
-    socketTimeoutMS: 45000,
-})
-    .then(() => {
-        console.log('✅ Connected to MongoDB Atlas');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
+const connectDB = async () => {
+    try {
+        if (!MONGODB_URI) {
+            throw new Error('MONGODB_URI is missing from environment variables');
+        }
+
+        console.log('⏳ Connecting to MongoDB Atlas...');
+        await mongoose.connect(MONGODB_URI, {
+            serverSelectionTimeoutMS: 15000,
+            socketTimeoutMS: 45000,
         });
-    })
-    .catch((error) => {
-        console.error('❌ MongoDB Atlas connection error:', error.message);
+        
+        console.log('✅ Connected to MongoDB Atlas');
+        
+        const server = app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Server is listening on port ${PORT}`);
+        });
+
+        server.on('error', (err) => {
+            console.error('❌ Server startup error:', err);
+            process.exit(1);
+        });
+
+    } catch (error) {
+        console.error('❌ CRITICAL ERROR during startup:');
+        console.error(error);
         process.exit(1);
-    });
+    }
+};
+
+// Handle process-wide errors
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+});
+
+connectDB();
