@@ -18,14 +18,14 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/login`, { email, password });
         localStorage.setItem('user', JSON.stringify(data));
         setUser(data);
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
     };
 
     const register = async (name, email, password) => {
-        const { data } = await axios.post('http://localhost:5000/api/auth/register', { name, email, password });
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/register`, { name, email, password });
         localStorage.setItem('user', JSON.stringify(data));
         setUser(data);
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;

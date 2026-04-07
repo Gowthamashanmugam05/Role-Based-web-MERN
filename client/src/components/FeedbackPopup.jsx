@@ -65,7 +65,7 @@ const FeedbackPopup = () => {
 
         try {
             if (user?.token) {
-                await axios.post('http://localhost:5000/api/feedback', 
+                await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/feedback`, 
                     { rating, message }, 
                     { headers: { Authorization: `Bearer ${user.token}` } }
                 );
